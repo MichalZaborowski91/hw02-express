@@ -18,6 +18,7 @@ const authMiddleware = async (req, res, next) => {
       throw new Error("Token is invalid");
     }
     req.email = userEntity;
+    req.user = userEntity._id;
     return next();
   } catch (error) {
     return res.status(401).send({ message: error.message });
