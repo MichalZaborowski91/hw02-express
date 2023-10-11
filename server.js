@@ -12,3 +12,9 @@ app.listen(serverPort, async () => {
   }
   console.log(`Server running. Use our API on port: ${serverPort}`);
 });
+
+process.on("SIGINT", async () => {
+  await db.disconnect();
+  console.log("Database connection closed.");
+  process.exit();
+});
