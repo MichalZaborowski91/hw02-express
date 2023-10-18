@@ -1,16 +1,34 @@
 const { DuplicatedKeyError } = require("../errors/db.errors");
 const userDao = require("./users.dao");
 const authService = require("../auth/auth.service");
+const gravatar = require("gravatar");
+const jimp = require("jimp");
+const fs = require("fs/promises");
+const path = require("path");
+const mimetypes = require("mime-types");
+const { User } = require("./user.model");
 
 const signupHandler = async (req, res, next) => {
   try {
     const { email, password } = req.body;
-    const createdUser = await userDao.createUser({ email, password });
+    const avatarURL = gravatar.url(
+      email,
+      {
+        default: "retro",
+      },
+      true
+    );
+    const createdUser = await userDao.createUser({
+      email,
+      password,
+      avatarURL,
+    });
 
     return res.status(201).send({
       user: {
         email: createdUser.email,
         subscription: createdUser.subscription,
+        avatarURL,
       },
     });
   } catch (error) {
@@ -66,9 +84,40 @@ const currentHandler = async (req, res, next) => {
   }
 };
 
+const updateAvatarHandler = async (req, res) => {
+  try {
+    // console.log(req.file);
+    const userEntity = await userDao.getUser(req.body.email);
+    const avatarTitle = userEntity.email;
+    const fileName = `${avatarTitle}_${Date.now()}.${mimetypes.extension(
+      req.file.mimetype
+    )}`;
+    const avatarImage = await jimp.read(req.file.path);
+    const resizedAvatar = avatarImage.resize(250, 250);
+    await resizedAvatar.writeAsync(req.file.path);
+    await fs.rename(
+      req.file.path,
+      path.join(__dirname, "../public/avatars", fileName)
+    );
+
+    const updatedUser = await User.findOneAndUpdate(
+      { email: userEntity.email },
+      {
+        avatarURL: `${req.protocol}://${req.headers.host}/avatars/${fileName}`,
+      },
+      { new: true }
+    );
+
+    return res.status(201).send({ user: updatedUser });
+  } catch (error) {
+    res.status(500).json({ message: "Internal Server Error" });
+  }
+};
+
 module.exports = {
   signupHandler,
   loginHandler,
   logoutHandler,
   currentHandler,
+  updateAvatarHandler,
 };
