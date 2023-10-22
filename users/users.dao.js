@@ -3,10 +3,15 @@ const {
   UnknownDatabaseError,
 } = require("../errors/db.errors");
 const { User } = require("./user.model");
+const { v4: uuid } = require("uuid");
 
 const createUser = async (userData) => {
   try {
-    return await User.create(userData);
+    return await User.create({
+      ...userData,
+      verified: false,
+      verificationToken: uuid(),
+    });
   } catch (error) {
     console.error(error);
     if (error.code === 11000) {
@@ -17,9 +22,9 @@ const createUser = async (userData) => {
   }
 };
 
-const getUser = async (email) => {
+const getUser = async (filter) => {
   try {
-    return await User.findOne({ email });
+    return await User.findOne(filter);
   } catch (error) {
     console.error(error);
     throw new UnknownDatabaseError();

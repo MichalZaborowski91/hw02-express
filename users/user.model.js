@@ -24,6 +24,14 @@ const userSchema = new Schema({
     type: String,
     default: null,
   },
+  verified: {
+    type: Boolean,
+    default: false,
+  },
+  verificationToken: {
+    type: String,
+    default: null,
+  },
 });
 
 // password hash

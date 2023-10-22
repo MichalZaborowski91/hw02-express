@@ -22,6 +22,8 @@ userRouter.get("/current", authMiddleware, usersController.currentHandler);
 userRouter.get("/secret", authMiddleware, (req, res) =>
   res.status(200).send({ message: "Hello from secret area." })
 );
+userRouter.get("/verify/:verificationToken", usersController.verifyHandler);
+userRouter.post("/verify", usersController.resendVerificationHandler);
 userRouter.patch(
   "/avatars",
   upload.single("avatarURL"),
